@@ -13,15 +13,13 @@ class Activation(Diffable):
 ## Intermediate Activations To Put Between Layers
 
 class LeakyReLU(Activation):
-
-    ## TODO: Implement for default intermediate activation.
-
     def __init__(self, alpha=0.3):
         self.alpha = alpha
 
     def forward(self, x) -> Tensor:
         """Leaky ReLu forward propagation!"""
-        return NotImplementedError
+        return Tensor(np.where(x > 0, x, x*self.alpha))
+        
 
     def get_input_gradients(self) -> list[Tensor]:
         """
@@ -29,8 +27,9 @@ class LeakyReLU(Activation):
         To see what methods/variables you have access to, refer to the cheat sheet.
         Hint: Make sure not to mutate any instance variables. Return a new list[tensor(s)]
         """
-        raise NotImplementedError
-
+        half = np.where(self.inputs[0] >= 0, 1, self.alpha)
+        return [np.where(self.inputs[0] == 0, 0, half)]
+    
     def compose_input_gradients(self, J):
         return self.get_input_gradients()[0] * J
 
@@ -44,18 +43,18 @@ class ReLU(LeakyReLU):
 ## Output Activations For Probability-Space Outputs
 
 class Sigmoid(Activation):
-    
-    ## TODO: Implement for default output activation to bind output to 0-1
-    
+        
     def forward(self, x) -> Tensor:
-        raise NotImplementedError
+        return (1+np.e**(-x))**-1
 
     def get_input_gradients(self) -> list[Tensor]:
         """
         To see what methods/variables you have access to, refer to the cheat sheet.
         Hint: Make sure not to mutate any instance variables. Return a new list[tensor(s)]
         """
-        raise NotImplementedError
+        #(1-sigmoid(x) = dsig)
+        sig = (1+np.e**(-self.inputs[0]))**-1
+        return [sig*(1-sig)] #More computationally intensive than storing a variable during forward, but I'm just not risking it
 
     def compose_input_gradients(self, J):
         return self.get_input_gradients()[0] * J
@@ -74,13 +73,27 @@ class Softmax(Activation):
 
         ## HINT: Use stable softmax, which subtracts maximum from
         ## all entries to prevent overflow/underflow issues
-        raise NotImplementedError
+
+
+        #Handle each row together, not as individual scalers
+
+        exps = np.exp(x-np.max(x))
+        return exps / np.sum(exps, axis=-1, keepdims=True)
+        
+    
 
     def get_input_gradients(self):
         """Softmax input gradients!"""
-        x, y = self.inputs + self.outputs
-        bn, n = x.shape
-        grad = np.zeros(shape=(bn, n, n), dtype=x.dtype)
+        def softmax_grad_per_vector(x):
+            exps = np.exp(x-np.max(x))
+            x = exps / np.sum(exps, axis=-1, keepdims=True)
+            #x is softmax results
+
+            z = np.outer(x, x) * -1
+            np.fill_diagonal(z, x*(1-x)) 
+            return Tensor(z)
         
-        # TODO: Implement softmax gradient
-        raise NotImplementedError
+        x = self.inputs[0]
+        return [np.apply_along_axis(softmax_grad_per_vector,-1, x)]
+    
+   

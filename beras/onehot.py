@@ -19,14 +19,28 @@ class OneHotEncoder(Callable):
         """
         Fits the one-hot encoder to a candidate dataset. Said dataset should contain
         all encounterable elements.
-
+        
         :param data: 1D array containing labels.
             For example, data = [0, 1, 3, 3, 1, 9, ...]
         """
-        return NotImplementedError
+        labels = np.unique(data)
+        s = len(labels)
+        one_hots = np.eye(s,s)
+        
+        self.one_dict = {labels[i]:one_hots[i, :] for i in range(s)}
+        self.inv_dict = {i:labels[i] for i in range(s)}
 
     def forward(self, data):
-        return NotImplementedError
+        try:
+            self.one_dict
+        except AttributeError:
+            self.fit(data)
+        return np.array([self.one_dict[imp] for imp in data])
 
     def inverse(self, data):
-        return NotImplementedError
+        try:
+            self.inv_dict
+        except AttributeError:
+            self.fit(data)
+        argm = np.argmax(data, -1)
+        return np.array([[self.inv_dict[m] for m in argm]])

@@ -1,7 +1,9 @@
 import numpy as np
 
 from typing import Literal
+#from core import Diffable, Variable, Tensor
 from beras.core import Diffable, Variable, Tensor
+
 
 DENSE_INITIALIZERS = Literal["zero", "normal", "xavier", "kaiming", "xavier uniform", "kaiming uniform"]
 
@@ -18,13 +20,13 @@ class Dense(Diffable):
         """
         Forward pass for a dense layer! Refer to lecture slides for how this is computed.
         """
-        return NotImplementedError
+        return x @ self.w + self.b 
 
     def get_input_gradients(self) -> list[Tensor]:
-        return NotImplementedError
+        return [Tensor(self.w)] #dz/dx
 
     def get_weight_gradients(self) -> list[Tensor]:
-        return NotImplementedError
+        return [np.expand_dims(Tensor(self.inputs[0]), -1), Tensor(1)] #
 
     @staticmethod
     def _initialize_weight(initializer, input_size, output_size) -> tuple[Variable, Variable]:
@@ -52,5 +54,19 @@ class Dense(Diffable):
             "xavier",
             "kaiming",
         ), f"Unknown dense weight initialization strategy '{initializer}' requested"
-
-        return None, None
+        weights = None
+        if initializer == "zero":
+            weights = np.zeros((input_size, output_size))
+        elif initializer == "normal":
+            weights = np.random.normal(size=(input_size, output_size))
+        elif initializer == "xavier":
+            fan_in = input_size
+            fan_out = output_size
+            weights = np.random.normal(0, scale=np.sqrt(2/(fan_in + fan_out)),size=(input_size, output_size)) #I swear if type matching changes from using np.sqrt causes an exception
+        elif initializer == "kaiming":
+            fan_in = input_size
+            weights = np.random.normal(0, scale=np.sqrt(2/fan_in),size=(input_size, output_size))
+        #Since we are doing x is samples by inputs, and doing Wx, W will be input by output
+        weights = Variable(weights)
+        bias = Variable(np.zeros((1, output_size)))
+        return weights, bias
