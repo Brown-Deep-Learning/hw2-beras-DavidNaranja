@@ -98,8 +98,6 @@ class Diffable(Callable, Weighted):
     """
     Modules that keep track of gradients
     """
-    '''def ignore(self):
-        print("Hi :)")'''
     # We define gradient tape as a class variable so that it can be accessed from anywhere
     #  and so that it can be set to None when we don't want to record gradients
     gradient_tape: GradientTape | None = None

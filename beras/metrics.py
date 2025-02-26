@@ -10,7 +10,6 @@ class CategoricalAccuracy(Callable):
         ## given the output probabilities and true labels. 
         ## HINT: Argmax + boolean mask via '=='
         mask = np.argmax(probs, -1) == np.argmax(labels, -1)
-        print(mask)
         return np.mean(mask)
     
 

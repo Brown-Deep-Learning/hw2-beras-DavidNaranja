@@ -54,8 +54,10 @@ if __name__ == '__main__':
     trl = ohe(trl)
     tel = ohe(tel)
     # 4. Train the model
-    model.fit(tri, trl, 10, 40)
+    model.fit(tri, trl, 10, 50)
     # 5. Evaluate the model
-    model.evaluate(tei, tel, 100)
+    res_dict, predictions = model.evaluate(tei, tel, 100)
+    print(np.mean(res_dict["acc"]))
+    np.save("predictions", predictions)
     
     

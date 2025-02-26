@@ -55,18 +55,24 @@ class Dense(Diffable):
             "kaiming",
         ), f"Unknown dense weight initialization strategy '{initializer}' requested"
         weights = None
+        bias = None
         if initializer == "zero":
             weights = np.zeros((input_size, output_size))
+            bias = np.zeros((1, output_size))
         elif initializer == "normal":
             weights = np.random.normal(size=(input_size, output_size))
+            bias = np.random.normal(size=(1, output_size))
         elif initializer == "xavier":
             fan_in = input_size
             fan_out = output_size
             weights = np.random.normal(0, scale=np.sqrt(2/(fan_in + fan_out)),size=(input_size, output_size)) #I swear if type matching changes from using np.sqrt causes an exception
+            bias = np.random.normal(0, scale=np.sqrt(2/(fan_in + fan_out)),size=(1, output_size)) 
         elif initializer == "kaiming":
             fan_in = input_size
             weights = np.random.normal(0, scale=np.sqrt(2/fan_in),size=(input_size, output_size))
+            bias = np.random.normal(0, scale=np.sqrt(2/fan_in),size=(1, output_size))
         #Since we are doing x is samples by inputs, and doing Wx, W will be input by output
         weights = Variable(weights)
-        bias = Variable(np.zeros((1, output_size)))
+        bias = Variable(bias)
+        #bias = Variable(np.zeros((1, output_size)))
         return weights, bias

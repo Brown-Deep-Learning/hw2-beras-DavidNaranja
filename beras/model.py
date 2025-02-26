@@ -104,15 +104,17 @@ class Model(Diffable):
         data_size = len(x)
         metric_dict = {"loss": [], "acc": []}
         batch_total = int(data_size/batch_size)
+        predictions = np.array([])
 
         for batch_num in range(0, batch_total):
             start_batch = batch_num*batch_size
             end_batch = start_batch + batch_size
 
-            res_dict = self.batch_step(x[start_batch: end_batch], y[start_batch: end_batch], False)
+            res_dict, p = self.batch_step(x[start_batch: end_batch], y[start_batch: end_batch], False)
+            predictions = np.append(predictions, p)
             update_metric_dict(metric_dict, res_dict)
             print_stats(metric_dict, batch_num, batch_num)
-        return metric_dict
+        return metric_dict, predictions
 
     def get_input_gradients(self) -> list[Tensor]:
         return super().get_input_gradients()
@@ -155,6 +157,6 @@ class SequentialModel(Model):
             return {"loss": loss, "acc": self.compiled_acc(y_hat, y)}
         else:
             self.trainable = False
-            y_hat = self(x)
-            return {"loss": self.compiled_loss(y_hat, y), "acc": self.compiled_acc(y_hat, y)}
+            y_hat = self.forward(x)
+            return ({"loss": self.compiled_loss(y_hat, y), "acc": self.compiled_acc(y_hat, y)}, np.argmax(y_hat, -1))
                
